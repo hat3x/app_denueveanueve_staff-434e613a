@@ -11,8 +11,16 @@ interface IdentityVerificationFormProps {
   onVerified: (method: string) => void;
 }
 
+const PIN_TABLES = ['visit_pins', 'verification_pins'] as const;
+type PinTable = (typeof PIN_TABLES)[number];
+
 function generatePin(): string {
   return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+function isMissingTableError(error: unknown) {
+  const code = (error as { code?: string } | null)?.code;
+  return code === 'PGRST205' || code === '42P01';
 }
 
 export function IdentityVerificationForm({ customerId, onVerified }: IdentityVerificationFormProps) {
@@ -20,6 +28,7 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
   const [pin, setPin] = useState('');
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
   const [pinId, setPinId] = useState<string | null>(null);
+  const [pinTable, setPinTable] = useState<PinTable | null>(null);
   const [generating, setGenerating] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
@@ -30,27 +39,44 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
     setPin('');
 
     const newPin = generatePin();
+    const newPinId = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 min
 
-    const { data, error: insertErr } = await supabase
-      .from('visit_pins' as any)
-      .insert({
-        customer_id: customerId,
-        pin: newPin,
-        expires_at: expiresAt,
-        created_by_staff_id: session?.user?.id ?? null,
-      } as any)
-      .select('id')
-      .single();
+    let insertErr: { message?: string } | null = null;
+    let resolvedTable: PinTable | null = null;
 
-    if (insertErr) {
-      setError('Error al generar PIN');
+    for (const table of PIN_TABLES) {
+      const { error: candidateErr } = await supabase
+        .from(table as any)
+        .insert({
+          id: newPinId,
+          customer_id: customerId,
+          pin: newPin,
+          expires_at: expiresAt,
+          created_by_staff_id: session?.user?.id ?? null,
+        } as any);
+
+      if (!candidateErr) {
+        resolvedTable = table;
+        insertErr = null;
+        break;
+      }
+
+      insertErr = candidateErr;
+      if (!isMissingTableError(candidateErr)) {
+        break;
+      }
+    }
+
+    if (insertErr || !resolvedTable) {
+      setError(`Error al generar PIN: ${insertErr?.message ?? 'tabla no disponible'}`);
       setGenerating(false);
       return;
     }
 
+    setPinTable(resolvedTable);
     setGeneratedPin(newPin);
-    setPinId((data as any)?.id ?? null);
+    setPinId(newPinId);
     setGenerating(false);
   };
 
@@ -67,45 +93,69 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
       return;
     }
 
+    if (!pinId) {
+      setError('No hay PIN activo. Genera uno nuevo.');
+      return;
+    }
+
     setVerifying(true);
 
-    // Validate: check the pin matches the one we generated and it's not expired
-    const { data, error: fetchErr } = await supabase
-      .from('visit_pins' as any)
-      .select('id, pin, expires_at, used')
-      .eq('id', pinId!)
-      .maybeSingle();
+    const tablesToTry = pinTable ? [pinTable] : [...PIN_TABLES];
+    let data: any = null;
+    let fetchErr: { message?: string } | null = null;
+    let resolvedTable: PinTable | null = pinTable;
+
+    for (const table of tablesToTry) {
+      const { data: candidateData, error: candidateErr } = await supabase
+        .from(table as any)
+        .select('id, pin, expires_at, used')
+        .eq('id', pinId)
+        .maybeSingle();
+
+      if (!candidateErr) {
+        data = candidateData;
+        resolvedTable = table;
+        fetchErr = null;
+        break;
+      }
+
+      fetchErr = candidateErr;
+      if (!isMissingTableError(candidateErr)) {
+        break;
+      }
+    }
 
     if (fetchErr || !data) {
-      setError('PIN no encontrado');
+      setError(fetchErr ? `PIN no encontrado: ${fetchErr.message ?? ''}` : 'PIN no encontrado');
       setVerifying(false);
       return;
     }
 
-    if ((data as any).used) {
+    if (data.used) {
       setError('Este PIN ya fue utilizado');
       setVerifying(false);
       return;
     }
 
-    if (new Date((data as any).expires_at) < new Date()) {
+    if (new Date(data.expires_at) < new Date()) {
       setError('PIN expirado. Genera uno nuevo.');
       setVerifying(false);
       return;
     }
 
-    if ((data as any).pin !== pin) {
+    if (data.pin !== pin) {
       setError('PIN incorrecto');
       setVerifying(false);
       return;
     }
 
-    // Mark as used
+    const tableForUpdate = resolvedTable ?? pinTable ?? PIN_TABLES[0];
     await supabase
-      .from('visit_pins' as any)
+      .from(tableForUpdate as any)
       .update({ used: true } as any)
-      .eq('id', pinId!);
+      .eq('id', pinId);
 
+    setPinTable(tableForUpdate);
     setVerifying(false);
     onVerified('QR_PIN');
   };
