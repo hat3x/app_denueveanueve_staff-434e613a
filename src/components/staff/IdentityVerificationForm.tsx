@@ -33,7 +33,7 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 min
 
     const { data, error: insertErr } = await supabase
-      .from('verification_pins')
+      .from('visit_pins' as any)
       .insert({
         customer_id: customerId,
         pin: newPin,
@@ -50,7 +50,7 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
     }
 
     setGeneratedPin(newPin);
-    setPinId(data?.id ?? null);
+    setPinId((data as any)?.id ?? null);
     setGenerating(false);
   };
 
@@ -71,10 +71,10 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
 
     // Validate: check the pin matches the one we generated and it's not expired
     const { data, error: fetchErr } = await supabase
-      .from('verification_pins')
+      .from('visit_pins' as any)
       .select('id, pin, expires_at, used')
       .eq('id', pinId!)
-      .single();
+      .maybeSingle();
 
     if (fetchErr || !data) {
       setError('PIN no encontrado');
@@ -102,7 +102,7 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
 
     // Mark as used
     await supabase
-      .from('verification_pins')
+      .from('visit_pins' as any)
       .update({ used: true } as any)
       .eq('id', pinId!);
 
