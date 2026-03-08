@@ -67,7 +67,7 @@ export default function VisitResult() {
         <div className="space-y-3">
           <Button
             onClick={() => navigate('/scan')}
-            className="w-full h-12 staff-gradient text-primary-foreground font-semibold"
+            className="w-full h-12 gradient-gold text-primary-foreground font-semibold shadow-gold"
           >
             Escanear otro cliente
           </Button>

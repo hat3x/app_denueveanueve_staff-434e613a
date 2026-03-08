@@ -70,7 +70,7 @@ export default function History() {
             variant={period === key ? 'default' : 'outline'}
             size="sm"
             onClick={() => setPeriod(key)}
-            className={period === key ? 'staff-gradient text-primary-foreground' : 'border-border text-foreground'}
+            className={period === key ? 'gradient-gold text-primary-foreground shadow-gold' : 'border-border text-foreground'}
           >
             {label}
           </Button>

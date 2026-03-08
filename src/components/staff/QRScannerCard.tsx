@@ -119,7 +119,7 @@ export function QRScannerCard({ onScanSuccess, onFallbackManual }: QRScannerCard
           <p className="mt-1 text-sm text-muted-foreground mb-4">
             Apunta la cámara al QR del cliente
           </p>
-          <Button onClick={startScanner} className="staff-gradient text-primary-foreground h-12 px-8">
+          <Button onClick={startScanner} className="gradient-gold text-primary-foreground shadow-gold h-12 px-8">
             <Camera className="mr-2 h-5 w-5" />
             Abrir cámara
           </Button>

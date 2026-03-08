@@ -85,7 +85,7 @@ export default function Dashboard() {
             onClick={() => navigate(to)}
             className={`flex w-full items-center gap-4 rounded-xl p-4 text-left transition-all active:scale-[0.98] ${
               gradient
-                ? 'staff-gradient text-primary-foreground'
+                ? 'gradient-gold text-primary-foreground shadow-gold'
                 : 'bg-card border border-border text-foreground hover:bg-secondary'
             }`}
           >

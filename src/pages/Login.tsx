@@ -4,7 +4,8 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Scissors, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -31,11 +32,9 @@ export default function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl staff-gradient">
-            <Scissors className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">Staff Panel</h1>
-          <p className="mt-1 text-sm text-muted-foreground">denueveanueve · Acceso interno</p>
+          <img src={logo} alt="denueveanueve" className="mx-auto mb-4 h-20 w-auto" />
+          <h1 className="text-2xl font-display text-foreground">Staff Panel</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Acceso interno del equipo</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -73,7 +72,7 @@ export default function Login() {
           <Button
             type="submit"
             disabled={loading}
-            className="h-12 w-full staff-gradient text-primary-foreground font-semibold text-base"
+            className="h-12 w-full gradient-gold text-primary-foreground font-semibold text-base shadow-gold"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Iniciar sesión'}
           </Button>

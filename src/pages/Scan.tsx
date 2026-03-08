@@ -53,7 +53,7 @@ export default function Scan() {
             className="h-12 bg-card border-border text-foreground"
           />
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1 staff-gradient text-primary-foreground h-12">
+            <Button type="submit" className="flex-1 gradient-gold text-primary-foreground shadow-gold h-12">
               Buscar por token
             </Button>
             <Button

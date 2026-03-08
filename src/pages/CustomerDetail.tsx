@@ -61,7 +61,7 @@ export default function CustomerDetail() {
 
       <div className="mt-4">
         <Button
-          className="w-full h-12 staff-gradient text-primary-foreground font-semibold"
+          className="w-full h-12 gradient-gold text-primary-foreground font-semibold shadow-gold"
           onClick={() => navigate('/select-service', {
             state: {
               customerId: customer.id,

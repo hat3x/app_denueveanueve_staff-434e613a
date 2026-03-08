@@ -186,7 +186,7 @@ export default function ConfirmVisit() {
         <Button
           onClick={handleConfirm}
           disabled={submitting || !selectedLocation}
-          className="w-full h-14 staff-gradient text-primary-foreground font-semibold text-base"
+          className="w-full h-14 gradient-gold text-primary-foreground font-semibold text-base shadow-gold"
         >
           {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Acreditar visita'}
         </Button>
