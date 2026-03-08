@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
@@ -31,37 +31,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true, error: null,
   });
 
-  const fetchRoles = useCallback(async (userId: string) => {
-    console.log('[Auth] Fetching roles for user:', userId);
+  // Cache roles per user to avoid re-fetching on token refresh
+  const rolesCache = useRef<{ userId: string; roles: AppRole[] } | null>(null);
 
+  const fetchRoles = useCallback(async (userId: string): Promise<AppRole[]> => {
+    // Return cached roles if same user
+    if (rolesCache.current?.userId === userId) {
+      console.log('[Auth] Using cached roles for user:', userId);
+      return rolesCache.current.roles;
+    }
+
+    console.log('[Auth] Fetching roles for user:', userId);
     try {
-      const rolesPromise = supabase
+      const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
 
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Roles query timeout')), 4000);
-      });
-
-      const { data, error } = await Promise.race([rolesPromise, timeoutPromise]) as Awaited<typeof rolesPromise>;
       console.log('[Auth] Roles result:', { data, error });
-
       if (error) return [];
-      return (data?.map((r) => r.role) ?? []) as AppRole[];
+
+      const roles = (data?.map((r) => r.role) ?? []) as AppRole[];
+      rolesCache.current = { userId, roles };
+      return roles;
     } catch (err) {
       console.error('[Auth] Failed fetching roles:', err);
       return [];
     }
   }, []);
 
-  const updateState = useCallback(async (session: Session | null) => {
+  const applyState = useCallback((session: Session | null, roles: AppRole[]) => {
     if (!session?.user) {
+      rolesCache.current = null;
       setState({ user: null, session: null, roles: [], isStaff: false, isManager: false, isAdmin: false, loading: false, error: null });
       return;
     }
-
-    const roles = await fetchRoles(session.user.id);
     const hasStaff = roles.some((r) => STAFF_ROLES.includes(r));
     setState({
       user: session.user, session, roles,
@@ -71,36 +75,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading: false,
       error: hasStaff ? null : 'No tienes permisos de staff',
     });
-  }, [fetchRoles]);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-    
-    // Safety timeout - if auth check takes too long, stop loading
+
     const timeout = setTimeout(() => {
-      if (mounted) {
-        setState((s) => s.loading ? { ...s, loading: false } : s);
+      if (mounted) setState((s) => s.loading ? { ...s, loading: false } : s);
+    }, 6000);
+
+    const handleSession = async (session: Session | null) => {
+      if (!mounted) return;
+      if (!session?.user) {
+        applyState(null, []);
+        return;
       }
-    }, 5000);
+      const roles = await fetchRoles(session.user.id);
+      if (mounted) applyState(session, roles);
+    };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => { 
-        if (mounted) await updateState(session); 
-      }
+      async (_event, session) => { await handleSession(session); }
     );
-    
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) updateState(session);
+      handleSession(session);
     }).catch(() => {
       if (mounted) setState((s) => ({ ...s, loading: false, error: 'Error de conexión' }));
     });
 
-    return () => { 
-      mounted = false; 
+    return () => {
+      mounted = false;
       clearTimeout(timeout);
-      subscription.unsubscribe(); 
+      subscription.unsubscribe();
     };
-  }, [updateState]);
+  }, [fetchRoles, applyState]);
 
   const signIn = async (email: string, password: string) => {
     setState((s) => ({ ...s, loading: true, error: null }));
