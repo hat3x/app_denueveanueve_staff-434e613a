@@ -108,8 +108,18 @@ export default function ConfirmVisit() {
           <div className="flex items-center gap-3">
             <Scissors className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Servicio</p>
-              <p className="font-medium text-foreground">{state?.serviceName}</p>
+              <p className="text-xs text-muted-foreground">Servicio{(state?.services?.length ?? 0) > 1 ? 's' : ''}</p>
+              {state?.services ? (
+                <ul className="space-y-0.5">
+                  {state.services.map((s: any) => (
+                    <li key={s.id} className="font-medium text-foreground text-sm">
+                      {s.name} <span className="text-xs text-muted-foreground">({s.points} pts)</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="font-medium text-foreground">{state?.serviceName}</p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
