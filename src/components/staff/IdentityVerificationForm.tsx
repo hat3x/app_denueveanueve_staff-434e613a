@@ -102,7 +102,7 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
 
     // Mark as used
     await supabase
-      .from('verification_pins')
+      .from('visit_pins' as any)
       .update({ used: true } as any)
       .eq('id', pinId!);
 
