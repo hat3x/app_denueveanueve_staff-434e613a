@@ -62,7 +62,7 @@ export function IdentityVerificationForm({ customerPhone, onVerified }: Identity
         </div>
       ) : (
         <div className="space-y-3 animate-slide-up">
-          {method !== 'manual' && (
+          {(
             <div>
               <Label className="text-foreground text-sm">
                 {method === 'phone' ? 'Últimos 4 dígitos del teléfono' : 'PIN del cliente'}
