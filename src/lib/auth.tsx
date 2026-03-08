@@ -57,11 +57,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchRoles]);
 
   useEffect(() => {
+    let mounted = true;
+    
+    // Safety timeout - if auth check takes too long, stop loading
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        setState((s) => s.loading ? { ...s, loading: false } : s);
+      }
+    }, 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => { await updateState(session); }
+      async (_event, session) => { 
+        if (mounted) await updateState(session); 
+      }
     );
-    supabase.auth.getSession().then(({ data: { session } }) => updateState(session));
-    return () => subscription.unsubscribe();
+    
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) updateState(session);
+    }).catch(() => {
+      if (mounted) setState((s) => ({ ...s, loading: false, error: 'Error de conexión' }));
+    });
+
+    return () => { 
+      mounted = false; 
+      clearTimeout(timeout);
+      subscription.unsubscribe(); 
+    };
   }, [updateState]);
 
   const signIn = async (email: string, password: string) => {
