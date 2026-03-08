@@ -79,12 +79,6 @@ export function IdentityVerificationForm({ customerPhone, onVerified }: Identity
               />
             </div>
           )}
-          {method === 'manual' && (
-            <p className="text-sm text-muted-foreground">
-              Confirmas que has verificado la identidad del cliente de forma manual.
-              Esta acción quedará registrada en auditoría.
-            </p>
-          )}
 
           {error && (
             <p className="text-sm text-destructive">{error}</p>
