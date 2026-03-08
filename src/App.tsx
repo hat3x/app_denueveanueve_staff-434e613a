@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
-import { StaffRouteGuard } from "@/components/staff/StaffRouteGuard";
 import { AppShell } from "@/components/staff/AppShell";
 
 import LoginPage from "./pages/Login";
@@ -32,9 +31,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-            {/* Protected routes */}
-            <Route element={<StaffRouteGuard><AppShell /></StaffRouteGuard>}>
+            <Route element={<AppShell />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/scan" element={<Scan />} />
               <Route path="/verify-customer" element={<VerifyCustomer />} />
@@ -46,7 +43,6 @@ const App = () => (
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
-
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
