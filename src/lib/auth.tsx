@@ -33,12 +33,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchRoles = useCallback(async (userId: string) => {
     console.log('[Auth] Fetching roles for user:', userId);
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
-    console.log('[Auth] Roles result:', { data, error });
-    return (data?.map((r) => r.role) ?? []) as AppRole[];
+
+    try {
+      const rolesPromise = supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Roles query timeout')), 4000);
+      });
+
+      const { data, error } = await Promise.race([rolesPromise, timeoutPromise]) as Awaited<typeof rolesPromise>;
+      console.log('[Auth] Roles result:', { data, error });
+
+      if (error) return [];
+      return (data?.map((r) => r.role) ?? []) as AppRole[];
+    } catch (err) {
+      console.error('[Auth] Failed fetching roles:', err);
+      return [];
+    }
   }, []);
 
   const updateState = useCallback(async (session: Session | null) => {
@@ -46,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState({ user: null, session: null, roles: [], isStaff: false, isManager: false, isAdmin: false, loading: false, error: null });
       return;
     }
+
     const roles = await fetchRoles(session.user.id);
     const hasStaff = roles.some((r) => STAFF_ROLES.includes(r));
     setState({
@@ -89,12 +104,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     setState((s) => ({ ...s, loading: true, error: null }));
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setState((s) => ({ ...s, loading: false, error: error.message }));
-      return { error: error.message };
+
+    try {
+      const authPromise = supabase.auth.signInWithPassword({ email, password });
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Tiempo de espera agotado al iniciar sesión')), 8000);
+      });
+
+      const { error } = await Promise.race([authPromise, timeoutPromise]) as Awaited<typeof authPromise>;
+
+      if (error) {
+        setState((s) => ({ ...s, loading: false, error: error.message }));
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (err: any) {
+      const message = err?.message || 'Error al iniciar sesión';
+      setState((s) => ({ ...s, loading: false, error: message }));
+      return { error: message };
     }
-    return { error: null };
   };
 
   const signOut = async () => {
