@@ -29,17 +29,30 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <img src={logo} alt="denueveanueve" className="mx-auto mb-4 h-10 w-auto" />
-          <h1 className="text-2xl font-display text-foreground">Staff Panel</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Acceso interno del equipo</p>
-        </div>
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 gradient-dark">
+      {/* Decorative glow */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-gold/5 blur-[120px]" />
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground">Email</Label>
+      <div className="relative z-10 flex w-full max-w-xs flex-col items-center text-center">
+        {/* Header */}
+        <p className="mb-2 text-sm uppercase tracking-[0.3em] text-gold-light">
+          Staff Panel
+        </p>
+
+        <img src={logo} alt="denueveanueve" className="mb-8 h-8 w-auto" />
+
+        <p className="mb-12 text-sm tracking-widest uppercase text-muted-foreground">
+          Acceso interno del equipo
+        </p>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
+          <div className="space-y-2 text-left">
+            <Label htmlFor="email" className="text-gold-light text-xs uppercase tracking-widest">
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -47,11 +60,13 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-12 bg-card border-border text-foreground placeholder:text-muted-foreground"
+              className="h-12 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-gold focus:ring-ring"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-foreground">Contraseña</Label>
+          <div className="space-y-2 text-left">
+            <Label htmlFor="password" className="text-gold-light text-xs uppercase tracking-widest">
+              Contraseña
+            </Label>
             <Input
               id="password"
               type="password"
@@ -59,7 +74,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-12 bg-card border-border text-foreground placeholder:text-muted-foreground"
+              className="h-12 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-gold focus:ring-ring"
             />
           </div>
 
@@ -72,7 +87,7 @@ export default function Login() {
           <Button
             type="submit"
             disabled={loading}
-            className="h-12 w-full gradient-gold text-primary-foreground font-semibold text-base shadow-gold"
+            className="mt-4 h-12 w-full gradient-gold text-primary-foreground font-semibold tracking-wide shadow-gold hover:opacity-90 transition-opacity"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Iniciar sesión'}
           </Button>
