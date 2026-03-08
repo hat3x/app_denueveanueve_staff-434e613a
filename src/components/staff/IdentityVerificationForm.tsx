@@ -33,7 +33,7 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 min
 
     const { data, error: insertErr } = await supabase
-      .from('verification_pins')
+      .from('visit_pins' as any)
       .insert({
         customer_id: customerId,
         pin: newPin,
