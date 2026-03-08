@@ -35,13 +35,15 @@ export default function SelectService() {
     fetch();
   }, []);
 
-  const handleSelect = (service: Service) => {
+  const handleSelect = (selected: Service[]) => {
+    const totalPoints = selected.reduce((sum, s) => sum + (s.fixed_points ?? 10), 0);
     navigate('/confirm-visit', {
       state: {
         ...state,
-        serviceId: service.id,
-        serviceName: service.name,
-        servicePoints: service.fixed_points ?? 10,
+        services: selected.map((s) => ({ id: s.id, name: s.name, points: s.fixed_points ?? 10 })),
+        serviceId: selected[0]?.id,
+        serviceName: selected.map((s) => s.name).join(', '),
+        servicePoints: totalPoints,
       },
     });
   };
@@ -49,11 +51,11 @@ export default function SelectService() {
   if (loading) return <LoadingState message="Cargando servicios..." />;
 
   return (
-    <div className="px-4 pt-6">
+    <div className="px-4 pt-6 pb-32">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
           <Scissors className="h-6 w-6 text-primary" />
-          Seleccionar servicio
+          Seleccionar servicios
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Cliente: <span className="font-medium text-foreground">{state?.customerName}</span>
