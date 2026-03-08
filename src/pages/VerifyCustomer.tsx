@@ -103,7 +103,7 @@ export default function VerifyCustomer() {
       {!verified && (
         <div className="mt-6">
           <IdentityVerificationForm
-            customerPhone={customer.phone}
+            customerId={customer.id}
             onVerified={handleVerified}
           />
         </div>

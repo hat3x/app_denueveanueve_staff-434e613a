@@ -143,6 +143,26 @@ export type Database = {
         Update: Record<string, unknown>
         Relationships: []
       }
+      verification_pins: {
+        Row: {
+          id: string
+          customer_id: string
+          pin: string
+          expires_at: string
+          used: boolean
+          created_by_staff_id: string | null
+          created_at: string
+        }
+        Insert: {
+          customer_id: string
+          pin: string
+          expires_at: string
+          created_by_staff_id?: string | null
+          [key: string]: unknown
+        }
+        Update: Record<string, unknown>
+        Relationships: []
+      }
       loyalty_transactions: {
         Row: {
           id: string
