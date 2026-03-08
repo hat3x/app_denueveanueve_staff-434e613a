@@ -1,8 +1,10 @@
-# Welcome to your Lovable project
+# denueveanueve Staff App
 
-## Project info
+App de gestión interna para el personal del salón.
+Conectada al mismo Supabase que la app cliente.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Flujo: Login → Dashboard → Escanear QR → Verificar → Servicio → Confirmar → Resultado
+## Para probar: crear usuario en Supabase Auth + asignar rol staff/manager/admin en user_roles
 
 ## How can I edit this code?
 
