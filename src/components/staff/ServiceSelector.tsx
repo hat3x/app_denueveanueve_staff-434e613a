@@ -116,7 +116,7 @@ export function ServiceSelector({ services, onSelect }: ServiceSelectorProps) {
 
       {/* Sticky confirm bar */}
       {selected.size > 0 && (
-        <div className="sticky bottom-0 mt-4 rounded-xl bg-card border border-border p-4 shadow-lg">
+        <div className="fixed bottom-20 left-4 right-4 z-40 rounded-xl bg-card border border-border p-4 shadow-lg">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-muted-foreground">
               {selected.size} servicio{selected.size > 1 ? 's' : ''} · <span className="font-semibold text-primary">{totalPoints} pts</span>
