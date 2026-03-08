@@ -95,7 +95,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => { await handleSession(session); }
+      (_event, session) => {
+        // IMPORTANT: don't await Supabase calls directly inside this callback
+        // to avoid auth deadlocks (can block signIn/signOut resolution)
+        setTimeout(() => {
+          void handleSession(session);
+        }, 0);
+      }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
