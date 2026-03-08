@@ -32,7 +32,7 @@ export default function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <img src={logo} alt="denueveanueve" className="mx-auto mb-4 h-20 w-auto" />
+          <img src={logo} alt="denueveanueve" className="mx-auto mb-4 h-10 w-auto" />
           <h1 className="text-2xl font-display text-foreground">Staff Panel</h1>
           <p className="mt-1 text-sm text-muted-foreground">Acceso interno del equipo</p>
         </div>
