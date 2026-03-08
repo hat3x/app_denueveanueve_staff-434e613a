@@ -50,7 +50,7 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
     }
 
     setGeneratedPin(newPin);
-    setPinId(data?.id ?? null);
+    setPinId((data as any)?.id ?? null);
     setGenerating(false);
   };
 
