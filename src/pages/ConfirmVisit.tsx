@@ -84,7 +84,6 @@ export default function ConfirmVisit() {
   const verificationLabels: Record<string, string> = {
     QR_PHONE: 'Teléfono (últimos 4 dígitos)',
     QR_PIN: 'PIN de cliente',
-    MANUAL: 'Verificación manual',
   };
 
   return (

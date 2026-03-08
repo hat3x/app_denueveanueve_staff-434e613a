@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, Phone, KeyRound, UserCheck } from 'lucide-react';
+import { ShieldCheck, Phone, KeyRound } from 'lucide-react';
 
 interface IdentityVerificationFormProps {
   customerPhone: string;
   onVerified: (method: string, value?: string) => void;
 }
 
-type VerifyMethod = 'phone' | 'pin' | 'manual';
+type VerifyMethod = 'phone' | 'pin';
 
 export function IdentityVerificationForm({ customerPhone, onVerified }: IdentityVerificationFormProps) {
   const [method, setMethod] = useState<VerifyMethod | null>(null);
@@ -32,15 +32,12 @@ export function IdentityVerificationForm({ customerPhone, onVerified }: Identity
       } else {
         setError('PIN mínimo 4 dígitos');
       }
-    } else if (method === 'manual') {
-      onVerified('MANUAL');
     }
   };
 
   const methods = [
     { key: 'phone' as VerifyMethod, icon: Phone, label: 'Últimos 4 dígitos del teléfono' },
     { key: 'pin' as VerifyMethod, icon: KeyRound, label: 'PIN de cliente' },
-    { key: 'manual' as VerifyMethod, icon: UserCheck, label: 'Verificación manual (staff)' },
   ];
 
   return (
@@ -65,29 +62,21 @@ export function IdentityVerificationForm({ customerPhone, onVerified }: Identity
         </div>
       ) : (
         <div className="space-y-3 animate-slide-up">
-          {method !== 'manual' && (
-            <div>
-              <Label className="text-foreground text-sm">
-                {method === 'phone' ? 'Últimos 4 dígitos del teléfono' : 'PIN del cliente'}
-              </Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                maxLength={method === 'phone' ? 4 : 6}
-                placeholder={method === 'phone' ? '• • • •' : '• • • • • •'}
-                value={value}
-                onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))}
-                className="mt-1 h-12 text-center text-xl tracking-[0.5em] bg-muted border-border text-foreground"
-                autoFocus
-              />
-            </div>
-          )}
-          {method === 'manual' && (
-            <p className="text-sm text-muted-foreground">
-              Confirmas que has verificado la identidad del cliente de forma manual.
-              Esta acción quedará registrada en auditoría.
-            </p>
-          )}
+          <div>
+            <Label className="text-foreground text-sm">
+              {method === 'phone' ? 'Últimos 4 dígitos del teléfono' : 'PIN del cliente'}
+            </Label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              maxLength={method === 'phone' ? 4 : 6}
+              placeholder={method === 'phone' ? '• • • •' : '• • • • • •'}
+              value={value}
+              onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))}
+              className="mt-1 h-12 text-center text-xl tracking-[0.5em] bg-muted border-border text-foreground"
+              autoFocus
+            />
+          </div>
 
           {error && (
             <p className="text-sm text-destructive">{error}</p>
