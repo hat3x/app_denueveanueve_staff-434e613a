@@ -32,10 +32,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const fetchRoles = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    console.log('[Auth] Fetching roles for user:', userId);
+    const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId);
+    console.log('[Auth] Roles result:', { data, error });
     return (data?.map((r) => r.role) ?? []) as AppRole[];
   }, []);
 
