@@ -32,8 +32,6 @@ export function IdentityVerificationForm({ customerPhone, onVerified }: Identity
       } else {
         setError('PIN mínimo 4 dígitos');
       }
-    } else if (method === 'manual') {
-      onVerified('MANUAL');
     }
   };
 
