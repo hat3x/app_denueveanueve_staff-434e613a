@@ -71,10 +71,10 @@ export function IdentityVerificationForm({ customerId, onVerified }: IdentityVer
 
     // Validate: check the pin matches the one we generated and it's not expired
     const { data, error: fetchErr } = await supabase
-      .from('verification_pins')
+      .from('visit_pins' as any)
       .select('id, pin, expires_at, used')
       .eq('id', pinId!)
-      .single();
+      .maybeSingle();
 
     if (fetchErr || !data) {
       setError('PIN no encontrado');
