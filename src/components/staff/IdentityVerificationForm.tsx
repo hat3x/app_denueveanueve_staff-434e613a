@@ -62,23 +62,21 @@ export function IdentityVerificationForm({ customerPhone, onVerified }: Identity
         </div>
       ) : (
         <div className="space-y-3 animate-slide-up">
-          {(
-            <div>
-              <Label className="text-foreground text-sm">
-                {method === 'phone' ? 'Últimos 4 dígitos del teléfono' : 'PIN del cliente'}
-              </Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                maxLength={method === 'phone' ? 4 : 6}
-                placeholder={method === 'phone' ? '• • • •' : '• • • • • •'}
-                value={value}
-                onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))}
-                className="mt-1 h-12 text-center text-xl tracking-[0.5em] bg-muted border-border text-foreground"
-                autoFocus
-              />
-            </div>
-          )}
+          <div>
+            <Label className="text-foreground text-sm">
+              {method === 'phone' ? 'Últimos 4 dígitos del teléfono' : 'PIN del cliente'}
+            </Label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              maxLength={method === 'phone' ? 4 : 6}
+              placeholder={method === 'phone' ? '• • • •' : '• • • • • •'}
+              value={value}
+              onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))}
+              className="mt-1 h-12 text-center text-xl tracking-[0.5em] bg-muted border-border text-foreground"
+              autoFocus
+            />
+          </div>
 
           {error && (
             <p className="text-sm text-destructive">{error}</p>
