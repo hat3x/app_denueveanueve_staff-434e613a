@@ -38,7 +38,6 @@ export function IdentityVerificationForm({ customerPhone, onVerified }: Identity
   const methods = [
     { key: 'phone' as VerifyMethod, icon: Phone, label: 'Últimos 4 dígitos del teléfono' },
     { key: 'pin' as VerifyMethod, icon: KeyRound, label: 'PIN de cliente' },
-    { key: 'manual' as VerifyMethod, icon: UserCheck, label: 'Verificación manual (staff)' },
   ];
 
   return (
