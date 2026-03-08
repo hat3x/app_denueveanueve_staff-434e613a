@@ -9,7 +9,7 @@ interface IdentityVerificationFormProps {
   onVerified: (method: string, value?: string) => void;
 }
 
-type VerifyMethod = 'phone' | 'pin' | 'manual';
+type VerifyMethod = 'phone' | 'pin';
 
 export function IdentityVerificationForm({ customerPhone, onVerified }: IdentityVerificationFormProps) {
   const [method, setMethod] = useState<VerifyMethod | null>(null);
