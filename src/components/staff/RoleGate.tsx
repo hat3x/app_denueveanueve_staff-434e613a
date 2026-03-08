@@ -1,7 +1,6 @@
 import { useAuth } from '@/lib/auth';
-import type { Database } from '@/integrations/supabase/types';
 
-type AppRole = Database['public']['Enums']['app_role'];
+type AppRole = 'admin' | 'manager' | 'staff' | 'customer';
 
 interface RoleGateProps {
   allowed: AppRole[];
