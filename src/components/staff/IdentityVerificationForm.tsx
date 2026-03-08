@@ -102,7 +102,7 @@ export function IdentityVerificationForm({ customerPhone, onVerified }: Identity
               Atrás
             </Button>
             <Button
-              className="flex-1 staff-gradient text-primary-foreground"
+              className="flex-1 gradient-gold text-primary-foreground shadow-gold"
               onClick={handleVerify}
             >
               Verificar
