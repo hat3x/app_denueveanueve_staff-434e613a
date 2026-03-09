@@ -73,6 +73,8 @@ export default function ConfirmVisit() {
           visitsTotal: data.visits_total ?? newVisits,
           pointsBalance: data.points_balance,
           unlockedReward: data.unlocked_reward,
+          premium: data.premium ?? null,
+          locationId: selectedLocation,
         },
       });
     } catch (err: any) {
