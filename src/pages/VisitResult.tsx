@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Star, TrendingUp, Gift, User, Scissors } from 'lucide-react';
+import PremiumClubSection from '@/components/staff/PremiumClubSection';
 
 export default function VisitResult() {
   const location = useLocation();
@@ -20,8 +21,10 @@ export default function VisitResult() {
     );
   }
 
+  const hasPremium = state.premium?.is_premium === true;
+
   return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-center px-6">
+    <div className="flex flex-col items-center px-6 pb-28 pt-8">
       <div className="w-full max-w-sm text-center animate-slide-up">
         {/* Success icon */}
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-accent/10 animate-check-bounce">
@@ -64,7 +67,15 @@ export default function VisitResult() {
           )}
         </div>
 
-        <div className="space-y-3">
+        {/* Club Premium section */}
+        {hasPremium && (
+          <PremiumClubSection
+            premium={state.premium}
+            locationId={state.locationId ?? ''}
+          />
+        )}
+
+        <div className="space-y-3 mt-6">
           <Button
             onClick={() => navigate('/scan')}
             className="w-full h-12 gradient-gold text-primary-foreground font-semibold shadow-gold"
