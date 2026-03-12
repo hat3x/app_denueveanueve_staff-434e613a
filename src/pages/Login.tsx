@@ -25,7 +25,7 @@ export default function Login() {
     if (error) {
       setError(error);
     } else {
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     }
   };
 

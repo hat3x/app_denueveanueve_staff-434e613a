@@ -33,3 +33,98 @@ export function AppShell() {
     </div>
   );
 }
+
+/** Shell for employee-only routes (staff with linked staff_member) */
+export function EmployeeShell() {
+  const { user, loading, hasStaffAccess } = useAuth();
+
+  if (loading) return <LoadingState message="Verificando acceso..." />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!hasStaffAccess) return <Navigate to="/login" replace />;
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <main className="flex-1 pb-20">
+        <Outlet />
+      </main>
+      <EmployeeBottomNav />
+    </div>
+  );
+}
+
+/** Shell for admin-only routes */
+export function AdminShell() {
+  const { user, loading, isAdmin } = useAuth();
+
+  if (loading) return <LoadingState message="Verificando acceso..." />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/dashboard" replace />;
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <main className="flex-1 pb-20">
+        <Outlet />
+      </main>
+      <AdminBottomNav />
+    </div>
+  );
+}
+
+// Employee bottom nav
+import { NavLink } from 'react-router-dom';
+import { Calendar, Settings } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+function EmployeeBottomNav() {
+  const items = [
+    { to: '/employee/calendar', icon: Calendar, label: 'Mi Calendario' },
+    { to: '/employee/settings', icon: Settings, label: 'Ajustes' },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-area-bottom">
+      <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1">
+        {items.map(({ to, icon: Icon, label }) => (
+          <NavLink key={to} to={to}
+            className={({ isActive }) => cn(
+              'flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-xs transition-colors',
+              isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+            )}>
+            <Icon className="h-5 w-5" />
+            <span className="font-medium">{label}</span>
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+// Admin bottom nav
+import { LayoutDashboard, Users, ScanLine, Clock } from 'lucide-react';
+
+function AdminBottomNav() {
+  const items = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
+    { to: '/scan', icon: ScanLine, label: 'Escanear' },
+    { to: '/admin/employees', icon: Users, label: 'Empleados' },
+    { to: '/history', icon: Clock, label: 'Historial' },
+    { to: '/settings', icon: Settings, label: 'Ajustes' },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-area-bottom">
+      <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1">
+        {items.map(({ to, icon: Icon, label }) => (
+          <NavLink key={to} to={to}
+            className={({ isActive }) => cn(
+              'flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-xs transition-colors',
+              isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+            )}>
+            <Icon className="h-5 w-5" />
+            <span className="font-medium">{label}</span>
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  );
+}

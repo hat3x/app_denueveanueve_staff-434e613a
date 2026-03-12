@@ -1,4 +1,4 @@
-// Database types for the staff app - mirrors the client app's Supabase schema
+// Database types - mirrors the shared Supabase schema (cpocwvedqlxtwazwoyfn)
 
 export type Json =
   | string
@@ -22,6 +22,7 @@ export type Database = {
           status: string
           qr_token: string
           preferred_location_id: string | null
+          date_of_birth: string | null
           created_at: string
           updated_at: string
           deleted_at: string | null
@@ -173,6 +174,69 @@ export type Database = {
           description: string | null
           created_by_user_id: string | null
           created_at: string
+        }
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      staff_members: {
+        Row: {
+          id: string
+          name: string
+          location_id: string
+          section: string
+          avatar_url: string | null
+          active: boolean
+          user_id: string | null
+          created_at: string
+        }
+        Insert: {
+          name: string
+          location_id: string
+          section: string
+          avatar_url?: string | null
+          user_id?: string | null
+          active?: boolean
+          [key: string]: unknown
+        }
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      employee_schedules: {
+        Row: {
+          id: string
+          staff_member_id: string
+          date: string
+          entry_type: string
+          start_time: string | null
+          end_time: string | null
+          notes: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          staff_member_id: string
+          date: string
+          entry_type: string
+          start_time?: string | null
+          end_time?: string | null
+          notes?: string | null
+          created_by?: string | null
+          [key: string]: unknown
+        }
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      visit_pins: {
+        Row: {
+          id: string
+          customer_id: string
+          pin: string
+          status: string
+          created_at: string
+          expires_at: string
+          created_by_staff_id: string | null
+          used: boolean
         }
         Insert: Record<string, unknown>
         Update: Record<string, unknown>

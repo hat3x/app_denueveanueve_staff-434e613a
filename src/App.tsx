@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
-import { AppShell } from "@/components/staff/AppShell";
+import { AppShell, EmployeeShell, AdminShell } from "@/components/staff/AppShell";
 
 import LoginPage from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -18,6 +18,10 @@ import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import EmployeeCalendar from "./pages/EmployeeCalendar";
+import AdminEmployees from "./pages/AdminEmployees";
+import AdminEmployeeCalendar from "./pages/AdminEmployeeCalendar";
+import RoleRedirect from "./pages/RoleRedirect";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +34,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<RoleRedirect />} />
+
+            {/* Staff (common) routes */}
             <Route element={<AppShell />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/scan" element={<Scan />} />
@@ -43,6 +49,19 @@ const App = () => (
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
+
+            {/* Employee routes */}
+            <Route element={<EmployeeShell />}>
+              <Route path="/employee/calendar" element={<EmployeeCalendar />} />
+              <Route path="/employee/settings" element={<Settings />} />
+            </Route>
+
+            {/* Admin routes */}
+            <Route element={<AdminShell />}>
+              <Route path="/admin/employees" element={<AdminEmployees />} />
+              <Route path="/admin/employees/:id" element={<AdminEmployeeCalendar />} />
+            </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

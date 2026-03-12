@@ -50,6 +50,12 @@
     --info: 210 80% 55%;
     --info-foreground: 210 90% 95%;
 
+    /* Calendar day types */
+    --cal-available: 210 70% 50%;
+    --cal-vacation: 152 60% 40%;
+    --cal-sick: 0 72% 51%;
+    --cal-holiday: 45 93% 47%;
+
     /* Gradients */
     --gradient-gold: linear-gradient(135deg, hsl(38 60% 50%), hsl(42 55% 60%));
     --gradient-dark: linear-gradient(180deg, hsl(30 10% 6%), hsl(30 8% 10%));

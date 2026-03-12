@@ -69,6 +69,12 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        cal: {
+          available: "hsl(var(--cal-available))",
+          vacation: "hsl(var(--cal-vacation))",
+          sick: "hsl(var(--cal-sick))",
+          holiday: "hsl(var(--cal-holiday))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
