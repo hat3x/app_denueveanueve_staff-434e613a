@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
   { to: '/scan', icon: ScanLine, label: 'Escanear' },
-  { to: '/customers', icon: Users, label: 'Clientes' },
+  { to: '/admin/employees', icon: Users, label: 'Empleados' },
   { to: '/history', icon: Clock, label: 'Historial' },
   { to: '/settings', icon: Settings, label: 'Ajustes' },
 ];
