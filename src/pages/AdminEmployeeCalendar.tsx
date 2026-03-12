@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -13,8 +13,15 @@ import type { StaffMember, ScheduleEntry, ScheduleEntryType } from '@/types/sche
 import { isSpanishHoliday } from '@/lib/spanish-holidays';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { ShiftEditor } from '@/components/calendar/ShiftEditor';
+import { DayDetailPanel } from '@/components/calendar/DayDetailPanel';
 
 type EditorMode = 'availability' | 'vacation' | 'sick_leave' | null;
+
+export interface ShiftRange {
+  start: string;
+  end: string;
+}
 
 export default function AdminEmployeeCalendar() {
   const { id } = useParams<{ id: string }>();
@@ -29,14 +36,14 @@ export default function AdminEmployeeCalendar() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedEntries, setSelectedEntries] = useState<ScheduleEntry[]>([]);
 
-  // Editor state
+  // Editor state — all modes now use multi-day selection
   const [editorMode, setEditorMode] = useState<EditorMode>(null);
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('18:00');
+  const [multiDayDates, setMultiDayDates] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Multi-day selection for vacation/sick
-  const [multiDayDates, setMultiDayDates] = useState<string[]>([]);
+  // Shift times (for availability)
+  const [shifts, setShifts] = useState<ShiftRange[]>([{ start: '09:00', end: '14:00' }]);
+  const [splitShift, setSplitShift] = useState(false);
 
   const { entries, loading: entriesLoading, refetch } = useScheduleEntries(id, year, month);
 
@@ -50,8 +57,8 @@ export default function AdminEmployeeCalendar() {
   }, [id]);
 
   const handleDayClick = (date: string, dayEntries: ScheduleEntry[]) => {
-    if (editorMode === 'vacation' || editorMode === 'sick_leave') {
-      // Toggle date in multi-day selection
+    if (editorMode) {
+      // Toggle date in multi-day selection for all modes
       setMultiDayDates((prev) =>
         prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date].sort()
       );
@@ -62,41 +69,55 @@ export default function AdminEmployeeCalendar() {
   };
 
   const handleSaveAvailability = async () => {
-    if (!selectedDate || !id || !user) return;
+    if (!id || !user || multiDayDates.length === 0) return;
     setSaving(true);
 
-    // Remove existing availability for this date
-    await supabase
-      .from('employee_schedules')
-      .delete()
-      .eq('staff_member_id', id)
-      .eq('date', selectedDate)
-      .eq('entry_type', 'availability');
+    const activeShifts = splitShift ? shifts : [shifts[0]];
 
-    const { error } = await supabase.from('employee_schedules').insert({
-      staff_member_id: id,
-      date: selectedDate,
-      entry_type: 'availability',
-      start_time: startTime,
-      end_time: endTime,
-      created_by: user.id,
-    });
+    for (const date of multiDayDates) {
+      // Remove existing availability for these dates
+      await supabase
+        .from('employee_schedules')
+        .delete()
+        .eq('staff_member_id', id)
+        .eq('date', date)
+        .eq('entry_type', 'availability');
+    }
 
+    // Insert one row per shift per date
+    const rows = multiDayDates.flatMap((date) =>
+      activeShifts.map((shift) => ({
+        staff_member_id: id,
+        date,
+        entry_type: 'availability' as const,
+        start_time: shift.start,
+        end_time: shift.end,
+        created_by: user.id,
+      }))
+    );
+
+    const { error } = await supabase.from('employee_schedules').insert(rows);
     setSaving(false);
+
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Guardado', description: 'Horario actualizado' });
+      toast({ title: 'Guardado', description: `Horario actualizado para ${multiDayDates.length} día(s)` });
       setEditorMode(null);
+      setMultiDayDates([]);
       refetch();
     }
   };
 
   const handleSaveMultiDay = async () => {
     if (!id || !user || !editorMode || multiDayDates.length === 0) return;
+
+    if (editorMode === 'availability') {
+      return handleSaveAvailability();
+    }
+
     setSaving(true);
 
-    // Remove existing entries of same type for these dates
     for (const date of multiDayDates) {
       await supabase
         .from('employee_schedules')
@@ -114,8 +135,8 @@ export default function AdminEmployeeCalendar() {
     }));
 
     const { error } = await supabase.from('employee_schedules').insert(rows);
-
     setSaving(false);
+
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
@@ -138,16 +159,21 @@ export default function AdminEmployeeCalendar() {
     }
   };
 
+  const resetEditor = () => {
+    setEditorMode(null);
+    setMultiDayDates([]);
+    setSplitShift(false);
+    setShifts([{ start: '09:00', end: '14:00' }]);
+  };
+
   if (loading) return <LoadingState message="Cargando empleado..." />;
   if (!member) return <div className="p-6 text-center text-muted-foreground">Empleado no encontrado</div>;
 
-  const holiday = selectedDate ? isSpanishHoliday(selectedDate) : undefined;
-  const typeLabels: Record<string, string> = {
-    availability: 'Disponible',
-    vacation: 'Vacaciones',
-    sick_leave: 'Baja',
-    holiday: 'Festivo',
-  };
+  const modeConfig = [
+    { mode: 'availability' as const, label: 'Horario', color: 'bg-cal-available' },
+    { mode: 'vacation' as const, label: 'Vacaciones', color: 'bg-cal-vacation' },
+    { mode: 'sick_leave' as const, label: 'Baja', color: 'bg-cal-sick' },
+  ];
 
   return (
     <div className="px-4 pt-6 pb-4">
@@ -164,18 +190,17 @@ export default function AdminEmployeeCalendar() {
 
       {/* Action buttons */}
       <div className="flex gap-2 mb-4 overflow-x-auto">
-        {([
-          { mode: 'availability' as const, label: 'Horario', color: 'bg-cal-available' },
-          { mode: 'vacation' as const, label: 'Vacaciones', color: 'bg-cal-vacation' },
-          { mode: 'sick_leave' as const, label: 'Baja', color: 'bg-cal-sick' },
-        ]).map(({ mode, label, color }) => (
+        {modeConfig.map(({ mode, label, color }) => (
           <Button
             key={mode}
             variant={editorMode === mode ? 'default' : 'outline'}
             size="sm"
             onClick={() => {
-              setEditorMode(editorMode === mode ? null : mode);
-              setMultiDayDates([]);
+              if (editorMode === mode) resetEditor();
+              else {
+                resetEditor();
+                setEditorMode(mode);
+              }
             }}
             className={cn('flex-shrink-0', editorMode === mode && color + ' text-white border-0')}
           >
@@ -185,27 +210,40 @@ export default function AdminEmployeeCalendar() {
         ))}
       </div>
 
-      {/* Multi-day selection info */}
-      {(editorMode === 'vacation' || editorMode === 'sick_leave') && (
-        <div className="mb-4 rounded-xl bg-card border border-border p-3">
-          <p className="text-sm text-muted-foreground mb-2">
-            Toca los días en el calendario para {editorMode === 'vacation' ? 'marcar vacaciones' : 'marcar baja'}.
+      {/* Editor panel for all modes */}
+      {editorMode && (
+        <div className="mb-4 rounded-xl bg-card border border-border p-3 space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Toca los días en el calendario para{' '}
+            {editorMode === 'availability' ? 'asignar horario' : editorMode === 'vacation' ? 'marcar vacaciones' : 'marcar baja'}.
             <span className="text-foreground font-medium"> {multiDayDates.length} día(s) seleccionado(s)</span>
           </p>
+
+          {/* Shift time editor for availability */}
+          {editorMode === 'availability' && (
+            <ShiftEditor
+              shifts={shifts}
+              setShifts={setShifts}
+              splitShift={splitShift}
+              setSplitShift={setSplitShift}
+            />
+          )}
+
           <div className="flex gap-2">
             <Button
               size="sm"
               disabled={multiDayDates.length === 0 || saving}
               onClick={handleSaveMultiDay}
-              className={cn(editorMode === 'vacation' ? 'bg-cal-vacation hover:bg-cal-vacation/90' : 'bg-cal-sick hover:bg-cal-sick/90', 'text-white')}
+              className={cn(
+                editorMode === 'availability' && 'bg-cal-available hover:bg-cal-available/90',
+                editorMode === 'vacation' && 'bg-cal-vacation hover:bg-cal-vacation/90',
+                editorMode === 'sick_leave' && 'bg-cal-sick hover:bg-cal-sick/90',
+                'text-white'
+              )}
             >
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : 'Confirmar'}
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => { setEditorMode(null); setMultiDayDates([]); }}
-            >
+            <Button size="sm" variant="ghost" onClick={resetEditor}>
               Cancelar
             </Button>
           </div>
@@ -220,79 +258,20 @@ export default function AdminEmployeeCalendar() {
           month={month}
           onMonthChange={(y, m) => { setYear(y); setMonth(m); setSelectedDate(null); setMultiDayDates([]); }}
           onDayClick={handleDayClick}
-          selectedDate={selectedDate}
+          selectedDate={editorMode ? null : selectedDate}
+          pendingDates={multiDayDates}
+          editorMode={editorMode}
         />
       </div>
 
-      {/* Day detail / editor */}
-      {selectedDate && editorMode !== 'vacation' && editorMode !== 'sick_leave' && (
-        <div className="mt-4 rounded-xl bg-card border border-border p-4 animate-slide-up">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-foreground">
-              {new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </h3>
-            <Button variant="ghost" size="icon" onClick={() => setSelectedDate(null)} className="h-7 w-7">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {holiday && (
-            <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-cal-holiday/20">
-              <Calendar className="h-4 w-4 text-cal-holiday" />
-              <span className="text-sm font-medium text-cal-holiday">{holiday.name}</span>
-            </div>
-          )}
-
-          {/* Existing entries */}
-          {selectedEntries.map((entry) => (
-            <div key={entry.id} className="flex items-center justify-between gap-2 mb-2 px-3 py-2 rounded-lg bg-secondary">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">
-                  {typeLabels[entry.entry_type]}
-                </span>
-                {entry.start_time && entry.end_time && (
-                  <span className="text-sm text-muted-foreground">
-                    {entry.start_time} – {entry.end_time}
-                  </span>
-                )}
-              </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDeleteEntry(entry.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-
-          {/* Availability editor */}
-          {editorMode === 'availability' && (
-            <div className="mt-3 space-y-3 pt-3 border-t border-border">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Añadir horario disponible</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Hora inicio</Label>
-                  <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="h-10 bg-secondary border-border" />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Hora fin</Label>
-                  <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="h-10 bg-secondary border-border" />
-                </div>
-              </div>
-              <Button
-                size="sm"
-                disabled={saving}
-                onClick={handleSaveAvailability}
-                className="bg-cal-available hover:bg-cal-available/90 text-white"
-              >
-                {saving ? 'Guardando...' : 'Guardar horario'}
-              </Button>
-            </div>
-          )}
-
-          {/* Quick add if no mode */}
-          {!editorMode && selectedEntries.length === 0 && !holiday && (
-            <p className="text-sm text-muted-foreground">Día libre — usa los botones de arriba para añadir entradas.</p>
-          )}
-        </div>
+      {/* Day detail panel (only when no editor mode) */}
+      {selectedDate && !editorMode && (
+        <DayDetailPanel
+          selectedDate={selectedDate}
+          selectedEntries={selectedEntries}
+          onClose={() => setSelectedDate(null)}
+          onDeleteEntry={handleDeleteEntry}
+        />
       )}
     </div>
   );

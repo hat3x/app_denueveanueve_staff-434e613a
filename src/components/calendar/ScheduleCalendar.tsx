@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { ScheduleEntry, ScheduleEntryType } from '@/types/schedule';
@@ -12,6 +12,10 @@ interface ScheduleCalendarProps {
   onMonthChange: (year: number, month: number) => void;
   onDayClick?: (date: string, entries: ScheduleEntry[]) => void;
   selectedDate?: string | null;
+  /** Dates selected but not yet saved — shown with outline style */
+  pendingDates?: string[];
+  /** Current editor mode — determines outline color for pending dates */
+  editorMode?: ScheduleEntryType | null;
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -31,6 +35,7 @@ function getDayType(dateStr: string, entries: ScheduleEntry[]): { type: DayType;
   return { type: 'free' };
 }
 
+/** Filled background for confirmed entries */
 const typeColors: Record<string, string> = {
   availability: 'bg-cal-available text-white',
   vacation: 'bg-cal-vacation text-white',
@@ -38,20 +43,30 @@ const typeColors: Record<string, string> = {
   holiday: 'bg-cal-holiday text-black',
 };
 
-export function ScheduleCalendar({ entries, year, month, onMonthChange, onDayClick, selectedDate }: ScheduleCalendarProps) {
+/** Outline-only style for pending (unconfirmed) selections */
+const pendingOutlineColors: Record<string, string> = {
+  availability: 'ring-2 ring-cal-available text-cal-available font-semibold',
+  vacation: 'ring-2 ring-cal-vacation text-cal-vacation font-semibold',
+  sick_leave: 'ring-2 ring-cal-sick text-cal-sick font-semibold',
+};
+
+export function ScheduleCalendar({
+  entries, year, month, onMonthChange, onDayClick, selectedDate,
+  pendingDates = [], editorMode,
+}: ScheduleCalendarProps) {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const pendingSet = useMemo(() => new Set(pendingDates), [pendingDates]);
 
   const days = useMemo(() => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    // Monday = 0, adjust from JS Sunday=0
     let startDow = firstDay.getDay() - 1;
     if (startDow < 0) startDow = 6;
 
     const result: { dateStr: string; day: number; currentMonth: boolean }[] = [];
 
-    // Previous month padding
     for (let i = startDow - 1; i >= 0; i--) {
       const d = new Date(year, month, -i);
       result.push({
@@ -61,13 +76,11 @@ export function ScheduleCalendar({ entries, year, month, onMonthChange, onDayCli
       });
     }
 
-    // Current month
     for (let d = 1; d <= lastDay.getDate(); d++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       result.push({ dateStr, day: d, currentMonth: true });
     }
 
-    // Next month padding
     const remaining = 7 - (result.length % 7);
     if (remaining < 7) {
       for (let i = 1; i <= remaining; i++) {
@@ -123,7 +136,11 @@ export function ScheduleCalendar({ entries, year, month, onMonthChange, onDayCli
           const { type } = getDayType(dateStr, entries);
           const isToday = dateStr === todayStr;
           const isSelected = dateStr === selectedDate;
-          const colorClass = currentMonth && type && type !== 'free' ? typeColors[type] : '';
+          const isPending = currentMonth && pendingSet.has(dateStr);
+
+          // Pending outline takes priority over confirmed fill for the visual
+          const confirmedClass = currentMonth && type && type !== 'free' && !isPending ? typeColors[type] : '';
+          const pendingClass = isPending && editorMode ? pendingOutlineColors[editorMode] ?? '' : '';
 
           return (
             <button
@@ -137,10 +154,11 @@ export function ScheduleCalendar({ entries, year, month, onMonthChange, onDayCli
               className={cn(
                 'aspect-square flex items-center justify-center rounded-lg text-sm transition-all relative',
                 !currentMonth && 'opacity-20 cursor-default',
-                currentMonth && !colorClass && 'text-foreground hover:bg-secondary',
-                colorClass,
-                isToday && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
-                isSelected && 'ring-2 ring-foreground ring-offset-1 ring-offset-background',
+                currentMonth && !confirmedClass && !pendingClass && 'text-foreground hover:bg-secondary',
+                confirmedClass,
+                pendingClass,
+                isToday && !isPending && !confirmedClass && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
+                isSelected && !isPending && 'ring-2 ring-foreground ring-offset-1 ring-offset-background',
               )}
             >
               {day}
