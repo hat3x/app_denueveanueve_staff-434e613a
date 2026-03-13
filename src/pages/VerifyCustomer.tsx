@@ -55,16 +55,40 @@ export default function VerifyCustomer() {
         return;
       }
 
-      const [loyaltyRes, rewardsRes] = await Promise.all([
+      // Today's date range for appointment lookup
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const [loyaltyRes, rewardsRes, appointmentsRes] = await Promise.all([
         supabase.from('loyalty_accounts').select('*').eq('customer_id', cust.id).single(),
         supabase.from('rewards').select('id', { count: 'exact', head: true })
           .eq('customer_id', cust.id).eq('status', 'AVAILABLE'),
+        supabase.from('appointments').select('id, start_at, location_id')
+          .eq('customer_id', cust.id)
+          .in('status', ['CONFIRMED', 'RESCHEDULED'])
+          .gte('start_at', todayStart.toISOString())
+          .lte('start_at', todayEnd.toISOString())
+          .order('start_at', { ascending: true })
+          .limit(1),
       ]);
+
+      let todayAppointment: any = null;
+      if (appointmentsRes.data && appointmentsRes.data.length > 0) {
+        const apt = appointmentsRes.data[0];
+        const { data: aptServices } = await supabase
+          .from('appointment_services')
+          .select('service_id, service_name_snapshot, points_snapshot')
+          .eq('appointment_id', apt.id);
+        todayAppointment = { ...apt, services: aptServices ?? [] };
+      }
 
       setCustomer({
         ...cust,
         loyalty: loyaltyRes.data ?? undefined,
         rewards_available: rewardsRes.count ?? 0,
+        todayAppointment,
       });
       setLoading(false);
     }
