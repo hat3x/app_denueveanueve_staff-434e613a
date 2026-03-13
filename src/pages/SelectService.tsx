@@ -8,10 +8,16 @@ import { Scissors } from 'lucide-react';
 interface Service {
   id: string;
   name: string;
-  category: string | null;
+  category_id: string | null;
   fixed_points: number | null;
   base_price: number | null;
   duration_min: number | null;
+}
+
+interface ServiceCategory {
+  id: string;
+  name: string;
+  sort_order: number | null;
 }
 
 export default function SelectService() {
@@ -19,17 +25,24 @@ export default function SelectService() {
   const navigate = useNavigate();
   const state = location.state as any;
   const [services, setServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetch() {
-      const { data } = await supabase
-        .from('services')
-        .select('id, name, category, fixed_points, base_price, duration_min')
-        .eq('active', true)
-        .order('category')
-        .order('name');
-      setServices(data ?? []);
+      const [svcRes, catRes] = await Promise.all([
+        supabase
+          .from('services' as any)
+          .select('id, name, category_id, fixed_points, base_price, duration_min')
+          .eq('active', true)
+          .order('name'),
+        supabase
+          .from('service_categories' as any)
+          .select('id, name, sort_order')
+          .order('sort_order'),
+      ]);
+      setServices((svcRes.data as any[]) ?? []);
+      setCategories((catRes.data as any[]) ?? []);
       setLoading(false);
     }
     fetch();
@@ -70,7 +83,12 @@ export default function SelectService() {
         )}
       </div>
 
-      <ServiceSelector services={services} onSelect={handleSelect} preSelectedIds={preSelectedIds} />
+      <ServiceSelector
+        services={services}
+        categories={categories}
+        onSelect={handleSelect}
+        preSelectedIds={preSelectedIds}
+      />
     </div>
   );
 }

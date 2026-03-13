@@ -7,19 +7,26 @@ import { EmptyState } from './EmptyState';
 interface Service {
   id: string;
   name: string;
-  category: string | null;
+  category_id: string | null;
   fixed_points: number | null;
   base_price: number | null;
   duration_min: number | null;
 }
 
+interface ServiceCategory {
+  id: string;
+  name: string;
+  sort_order: number | null;
+}
+
 interface ServiceSelectorProps {
   services: Service[];
+  categories: ServiceCategory[];
   onSelect: (services: Service[]) => void;
   preSelectedIds?: string[];
 }
 
-export function ServiceSelector({ services, onSelect, preSelectedIds = [] }: ServiceSelectorProps) {
+export function ServiceSelector({ services, categories, onSelect, preSelectedIds = [] }: ServiceSelectorProps) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, Service>>(new Map());
   const [initialized, setInitialized] = useState(false);
@@ -35,17 +42,44 @@ export function ServiceSelector({ services, onSelect, preSelectedIds = [] }: Ser
     }
   }, [services, preSelectedIds, initialized]);
 
-  const filtered = services.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    (s.category?.toLowerCase().includes(search.toLowerCase()) ?? false)
-  );
+  // Build category name map
+  const catMap = new Map(categories.map((c) => [c.id, c.name]));
 
-  const grouped = filtered.reduce<Record<string, Service[]>>((acc, s) => {
-    const cat = s.category || 'Otros';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(s);
-    return acc;
-  }, {});
+  const filtered = services.filter((s) => {
+    const catName = s.category_id ? catMap.get(s.category_id) ?? '' : '';
+    return (
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      catName.toLowerCase().includes(search.toLowerCase())
+    );
+  });
+
+  // Group by category, respecting sort_order
+  const grouped: { name: string; items: Service[] }[] = [];
+  const catOrder = categories.map((c) => c.id);
+
+  // Services with known categories
+  const byCat = new Map<string, Service[]>();
+  const uncategorized: Service[] = [];
+
+  filtered.forEach((s) => {
+    if (s.category_id && catMap.has(s.category_id)) {
+      if (!byCat.has(s.category_id)) byCat.set(s.category_id, []);
+      byCat.get(s.category_id)!.push(s);
+    } else {
+      uncategorized.push(s);
+    }
+  });
+
+  catOrder.forEach((catId) => {
+    const items = byCat.get(catId);
+    if (items && items.length > 0) {
+      grouped.push({ name: catMap.get(catId)!, items });
+    }
+  });
+
+  if (uncategorized.length > 0) {
+    grouped.push({ name: 'Otros', items: uncategorized });
+  }
 
   const toggleService = (service: Service) => {
     setSelected((prev) => {
@@ -73,13 +107,13 @@ export function ServiceSelector({ services, onSelect, preSelectedIds = [] }: Ser
         className="mb-4 h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
       />
 
-      {Object.keys(grouped).length === 0 ? (
+      {grouped.length === 0 ? (
         <EmptyState title="Sin servicios" message="No se encontraron servicios" />
       ) : (
         <div className="space-y-4">
-          {Object.entries(grouped).map(([category, items]) => (
-            <div key={category}>
-              <h3 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{category}</h3>
+          {grouped.map(({ name, items }) => (
+            <div key={name}>
+              <h3 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{name}</h3>
               <div className="space-y-2">
                 {items.map((service) => {
                   const isSelected = selected.has(service.id);
