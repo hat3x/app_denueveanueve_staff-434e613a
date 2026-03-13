@@ -16,11 +16,20 @@ interface Service {
 interface ServiceSelectorProps {
   services: Service[];
   onSelect: (services: Service[]) => void;
+  preSelectedIds?: string[];
 }
 
-export function ServiceSelector({ services, onSelect }: ServiceSelectorProps) {
+export function ServiceSelector({ services, onSelect, preSelectedIds = [] }: ServiceSelectorProps) {
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Map<string, Service>>(new Map());
+  const [selected, setSelected] = useState<Map<string, Service>>(() => {
+    const initial = new Map<string, Service>();
+    if (preSelectedIds.length > 0) {
+      services.forEach((s) => {
+        if (preSelectedIds.includes(s.id)) initial.set(s.id, s);
+      });
+    }
+    return initial;
+  });
 
   const filtered = services.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
