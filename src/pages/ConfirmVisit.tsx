@@ -79,6 +79,17 @@ export default function ConfirmVisit() {
           unlockedReward: data.unlocked_reward,
           premium: data.premium ?? null,
           locationId: selectedLocation,
+          hasActiveCoupon: data.has_active_coupon ?? false,
+          couponRedeemed: data.coupon_redeemed ?? false,
+          // Params for potential second call (coupon redeem)
+          retryParams: {
+            qr_token: state.qrToken,
+            location_id: selectedLocation,
+            service_prices: (state.services ?? []).map((s: any) => ({
+              service_name: s.name,
+              final_price: s.points ?? 10,
+            })),
+          },
         },
       });
     } catch (err: any) {
