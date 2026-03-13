@@ -1,16 +1,21 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ScanLine, Users, Clock, Settings } from 'lucide-react';
+import { LayoutDashboard, ScanLine, Users, Clock, Settings, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
-  { to: '/scan', icon: ScanLine, label: 'Escanear' },
-  { to: '/admin/employees', icon: Users, label: 'Empleados' },
-  { to: '/history', icon: Clock, label: 'Historial' },
-  { to: '/settings', icon: Settings, label: 'Ajustes' },
-];
+import { useAuth } from '@/lib/auth';
 
 export function BottomNav() {
+  const { isAdmin } = useAuth();
+
+  const navItems = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
+    { to: '/scan', icon: ScanLine, label: 'Escanear' },
+    isAdmin
+      ? { to: '/admin/employees', icon: Users, label: 'Empleados' }
+      : { to: '/employee/calendar', icon: UserCircle, label: 'Mi Ficha' },
+    { to: '/history', icon: Clock, label: 'Historial' },
+    { to: '/settings', icon: Settings, label: 'Ajustes' },
+  ];
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-area-bottom">
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1">
