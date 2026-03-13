@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, Clock, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,11 +16,24 @@ interface Service {
 interface ServiceSelectorProps {
   services: Service[];
   onSelect: (services: Service[]) => void;
+  preSelectedIds?: string[];
 }
 
-export function ServiceSelector({ services, onSelect }: ServiceSelectorProps) {
+export function ServiceSelector({ services, onSelect, preSelectedIds = [] }: ServiceSelectorProps) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, Service>>(new Map());
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!initialized && services.length > 0 && preSelectedIds.length > 0) {
+      const initial = new Map<string, Service>();
+      services.forEach((s) => {
+        if (preSelectedIds.includes(s.id)) initial.set(s.id, s);
+      });
+      if (initial.size > 0) setSelected(initial);
+      setInitialized(true);
+    }
+  }, [services, preSelectedIds, initialized]);
 
   const filtered = services.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||

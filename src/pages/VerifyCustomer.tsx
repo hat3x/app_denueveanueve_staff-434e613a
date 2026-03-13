@@ -15,6 +15,11 @@ interface CustomerData {
   status: string;
   loyalty?: { visits_total: number; points_balance: number; last_visit_at: string | null };
   rewards_available: number;
+  todayAppointment?: {
+    id: string;
+    location_id: string;
+    services: Array<{ service_id: string; service_name_snapshot: string; points_snapshot: number | null }>;
+  } | null;
 }
 
 export default function VerifyCustomer() {
@@ -55,16 +60,41 @@ export default function VerifyCustomer() {
         return;
       }
 
-      const [loyaltyRes, rewardsRes] = await Promise.all([
+      // Today's date range for appointment lookup
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const [loyaltyRes, rewardsRes, appointmentsRes] = await Promise.all([
         supabase.from('loyalty_accounts').select('*').eq('customer_id', cust.id).single(),
         supabase.from('rewards').select('id', { count: 'exact', head: true })
           .eq('customer_id', cust.id).eq('status', 'AVAILABLE'),
+        supabase.from('appointments' as any).select('id, start_at, location_id')
+          .eq('customer_id', cust.id)
+          .in('status', ['CONFIRMED', 'RESCHEDULED'])
+          .gte('start_at', todayStart.toISOString())
+          .lte('start_at', todayEnd.toISOString())
+          .order('start_at', { ascending: true })
+          .limit(1),
       ]);
+
+      let todayAppointment: CustomerData['todayAppointment'] = null;
+      const aptData = (appointmentsRes as any)?.data;
+      if (aptData && aptData.length > 0) {
+        const apt = aptData[0];
+        const { data: aptServices } = await supabase
+          .from('appointment_services' as any)
+          .select('service_id, service_name_snapshot, points_snapshot')
+          .eq('appointment_id', apt.id);
+        todayAppointment = { ...apt, services: (aptServices as any[]) ?? [] };
+      }
 
       setCustomer({
         ...cust,
         loyalty: loyaltyRes.data ?? undefined,
         rewards_available: rewardsRes.count ?? 0,
+        todayAppointment,
       });
       setLoading(false);
     }
@@ -81,6 +111,7 @@ export default function VerifyCustomer() {
         qrToken,
         verificationMethod: method,
         loyalty: customer!.loyalty,
+        todayAppointment: customer!.todayAppointment ?? null,
       },
     });
   };

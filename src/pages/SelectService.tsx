@@ -50,6 +50,8 @@ export default function SelectService() {
 
   if (loading) return <LoadingState message="Cargando servicios..." />;
 
+  const preSelectedIds = (state?.todayAppointment?.services ?? []).map((s: any) => s.service_id);
+
   return (
     <div className="px-4 pt-6 pb-32">
       <div className="mb-6">
@@ -60,9 +62,14 @@ export default function SelectService() {
         <p className="mt-1 text-sm text-muted-foreground">
           Cliente: <span className="font-medium text-foreground">{state?.customerName}</span>
         </p>
+        {preSelectedIds.length > 0 && (
+          <p className="mt-1 text-xs text-primary">
+            ✓ Servicios de la cita pre-seleccionados
+          </p>
+        )}
       </div>
 
-      <ServiceSelector services={services} onSelect={handleSelect} />
+      <ServiceSelector services={services} onSelect={handleSelect} preSelectedIds={preSelectedIds} />
     </div>
   );
 }
