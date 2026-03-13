@@ -44,6 +44,7 @@ export default function SelectService() {
         serviceId: selected[0]?.id,
         serviceName: selected.map((s) => s.name).join(', '),
         servicePoints: totalPoints,
+        appointmentId: state?.todayAppointment?.id ?? null,
       },
     });
   };

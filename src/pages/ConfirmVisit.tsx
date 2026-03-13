@@ -55,6 +55,7 @@ export default function ConfirmVisit() {
           qr_token: state.qrToken,
           location_id: selectedLocation,
           service_id: state.serviceId,
+          appointment_id: state.appointmentId ?? undefined,
           service_prices: (state.services ?? []).map((s: any) => ({
             service_id: s.id,
             points: s.points ?? 10,
