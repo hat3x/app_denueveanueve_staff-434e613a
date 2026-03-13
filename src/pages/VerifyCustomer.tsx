@@ -111,6 +111,7 @@ export default function VerifyCustomer() {
         qrToken,
         verificationMethod: method,
         loyalty: customer!.loyalty,
+        todayAppointment: customer!.todayAppointment ?? null,
       },
     });
   };
