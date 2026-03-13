@@ -21,15 +21,19 @@ interface ServiceSelectorProps {
 
 export function ServiceSelector({ services, onSelect, preSelectedIds = [] }: ServiceSelectorProps) {
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Map<string, Service>>(() => {
-    const initial = new Map<string, Service>();
-    if (preSelectedIds.length > 0) {
+  const [selected, setSelected] = useState<Map<string, Service>>(new Map());
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!initialized && services.length > 0 && preSelectedIds.length > 0) {
+      const initial = new Map<string, Service>();
       services.forEach((s) => {
         if (preSelectedIds.includes(s.id)) initial.set(s.id, s);
       });
+      if (initial.size > 0) setSelected(initial);
+      setInitialized(true);
     }
-    return initial;
-  });
+  }, [services, preSelectedIds, initialized]);
 
   const filtered = services.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
