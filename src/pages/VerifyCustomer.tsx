@@ -15,6 +15,11 @@ interface CustomerData {
   status: string;
   loyalty?: { visits_total: number; points_balance: number; last_visit_at: string | null };
   rewards_available: number;
+  todayAppointment?: {
+    id: string;
+    location_id: string;
+    services: Array<{ service_id: string; service_name_snapshot: string; points_snapshot: number | null }>;
+  } | null;
 }
 
 export default function VerifyCustomer() {
